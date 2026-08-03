@@ -1,10 +1,13 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import ReactDOM from "react-dom/client";
+import { Toaster } from "react-hot-toast";
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
+import App from "./App";
+import ErrorBoundary from "./components/common/ErrorBoundary";
+import "./index.css";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <ErrorBoundary>
+    <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
     <App />
-  </StrictMode>,
-)
+  </ErrorBoundary>
+);
