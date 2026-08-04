@@ -1,7 +1,8 @@
 const Employee = require("../models/Employee");
 const asyncHandler = require("../middleware/asyncHandler");
+const mongoose = require("mongoose");
 
-exports.createEmployee = asyncHandler(async (req, res, next) => {
+exports.createEmployee = asyncHandler(async (req, res) => {
     const payload = req.body;
 
     if (!payload?.fullName?.trim()) {
@@ -40,7 +41,11 @@ exports.createEmployee = asyncHandler(async (req, res, next) => {
         throw error;
     }
 
-    if (payload.salary === undefined || payload.salary === null || Number(payload.salary) <= 0) {
+    if (
+        payload.salary === undefined ||
+        payload.salary === null ||
+        Number(payload.salary) <= 0
+    ) {
         const error = new Error("Salary must be greater than zero");
         error.statusCode = 400;
         throw error;
@@ -53,7 +58,6 @@ exports.createEmployee = asyncHandler(async (req, res, next) => {
     }
 
     const employee = await Employee.create({
-        ...payload,
         fullName: payload.fullName.trim(),
         email: payload.email.trim().toLowerCase(),
         phone: payload.phone.trim(),
@@ -63,6 +67,11 @@ exports.createEmployee = asyncHandler(async (req, res, next) => {
         joiningDate: payload.joiningDate,
         status: payload.status?.trim() || "Active",
     });
+
+    // Debug Logs
+    console.log("Saved Employee:", employee);
+    console.log("Connected Database:", mongoose.connection.name);
+    console.log("Connected Collection:", Employee.collection.name);
 
     res.status(201).json({
         success: true,
