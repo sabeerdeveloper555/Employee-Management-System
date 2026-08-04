@@ -145,6 +145,72 @@ http://localhost:5000
 | DELETE | /api/employees/:id | Delete employee |
 | GET | /api/employees/dashboard | Dashboard statistics |
 
+## System Flow Diagram
+
+```mermaid
+flowchart TD
+
+A([Start]) --> B[Open Employee Management System]
+
+B --> C{Choose Module}
+
+C --> D[Dashboard]
+C --> E[Employees]
+
+%% Dashboard
+D --> D1[Fetch Dashboard Statistics]
+D1 --> D2[Display Total Employees]
+D1 --> D3[Display Active Employees]
+D1 --> D4[Display Inactive Employees]
+D1 --> D5[Display Total Departments]
+D1 --> D6[Display Recent Employees]
+
+%% Employee Module
+E --> F{Select Action}
+
+F --> G[Add Employee]
+F --> H[View Employees]
+F --> I[Edit Employee]
+F --> J[Delete Employee]
+
+%% Add Employee
+G --> G1[Fill Employee Form]
+G1 --> G2[Validate Input]
+G2 -->|Valid| G3[Send POST Request]
+G2 -->|Invalid| G4[Show Validation Error]
+G3 --> G5[Save Employee in MongoDB]
+G5 --> G6[Show Success Toast]
+
+%% View Employee
+H --> H1[Fetch Employees]
+H1 --> H2[Search Employees]
+H1 --> H3[Filter Employees]
+H1 --> H4[Sort Employees]
+H2 --> H5[Display Results]
+H3 --> H5
+H4 --> H5
+
+%% Edit Employee
+I --> I1[Load Employee Data]
+I1 --> I2[Update Information]
+I2 --> I3[Send PUT Request]
+I3 --> I4[Update MongoDB]
+I4 --> I5[Show Success Toast]
+
+%% Delete Employee
+J --> J1[Show Confirmation Dialog]
+J1 -->|Confirm| J2[Send DELETE Request]
+J1 -->|Cancel| H
+J2 --> J3[Delete from MongoDB]
+J3 --> J4[Show Success Toast]
+
+%% End
+G6 --> Z([End])
+H5 --> Z
+I5 --> Z
+J4 --> Z
+```
+
 ## Future Improvements
 
 - Authentication and Authorization
