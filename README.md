@@ -178,9 +178,9 @@ This project helped me gain practical experience in:
 
 Full Stack Web Developer
 
-GitHub: https://github.com/your-username
+GitHub: https://github.com/sabeerdeveloper555
 
-LinkedIn: https://linkedin.com/in/your-profile
+LinkedIn: https://www.linkedin.com/in/sabeer-alam/
 
 ## License
 
