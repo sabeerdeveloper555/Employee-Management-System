@@ -71,7 +71,6 @@ export default function EditEmployee() {
             ? "Employee could not be found."
             : "Unable to load employee details.";
         setError(message);
-        toast.error(message);
       } finally {
         setLoading(false);
       }

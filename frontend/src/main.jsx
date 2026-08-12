@@ -7,7 +7,29 @@ import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <ErrorBoundary>
-    <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+    <Toaster
+      position="top-right"
+      toastOptions={{
+        duration: 3000,
+
+        style: {
+          borderRadius: "12px",
+          background: "#0F172A",
+          color: "#FFFFFF",
+          padding: "12px 16px",
+          fontSize: "14px",
+        },
+
+        success: {
+          duration: 3000,
+        },
+
+        error: {
+          duration: 4000,
+        },
+      }}
+    />
+
     <App />
   </ErrorBoundary>
 );

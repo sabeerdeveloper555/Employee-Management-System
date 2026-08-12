@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+
 import {
   HiOutlinePhone,
   HiOutlineCurrencyDollar,
@@ -8,10 +9,12 @@ import {
   HiOutlineUser,
   HiOutlineMail,
 } from "react-icons/hi";
+
 import Header from "../components/layout/Header.jsx";
 import Card from "../components/common/Card.jsx";
 import Button from "../components/common/Button.jsx";
 import Input from "../components/common/Input.jsx";
+
 import { createEmployee } from "../services/employeeService";
 
 const departments = ["IT", "HR", "Finance", "Marketing", "Sales"];
@@ -30,12 +33,17 @@ const initialForm = {
 
 export default function AddEmployee() {
   const navigate = useNavigate();
+
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const validateForm = () => {
@@ -94,6 +102,7 @@ export default function AddEmployee() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    // Prevent double submission
     if (loading) {
       return;
     }
@@ -106,12 +115,19 @@ export default function AddEmployee() {
 
     try {
       setLoading(true);
+
       await createEmployee(payload);
+
       toast.success("Employee created successfully.");
+
       setForm(initialForm);
+
       navigate("/employees");
     } catch (error) {
-      const message = error?.response?.data?.message || "Unable to create employee.";
+      const message =
+        error?.response?.data?.message ||
+        "Unable to create employee.";
+
       toast.error(message);
     } finally {
       setLoading(false);
@@ -120,21 +136,34 @@ export default function AddEmployee() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <Header
         title="Add Employee"
         subtitle="Create a polished employee profile with the right details from the start."
         actions={
-          <Button variant="outline" to="/employees">
+          <Button
+            variant="outline"
+            to="/employees"
+            disabled={loading}
+          >
             Cancel
           </Button>
         }
       />
 
+      {/* Form Card */}
       <Card className="border-slate-200/80">
-        <form className="grid gap-6 lg:grid-cols-2" onSubmit={handleSubmit}>
+        <form
+          className="grid gap-6 lg:grid-cols-2"
+          onSubmit={handleSubmit}
+        >
+          {/* Profile Details */}
           <div className="space-y-5">
             <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-              <h3 className="text-lg font-semibold text-slate-900">Profile details</h3>
+              <h3 className="text-lg font-semibold text-slate-900">
+                Profile details
+              </h3>
+
               <p className="mt-1 text-sm text-slate-500">
                 Use a clear, professional overview for every new hire.
               </p>
@@ -148,7 +177,9 @@ export default function AddEmployee() {
               required
               value={form.fullName}
               onChange={handleChange}
+              disabled={loading}
             />
+
             <Input
               label="Email"
               name="email"
@@ -158,7 +189,9 @@ export default function AddEmployee() {
               required
               value={form.email}
               onChange={handleChange}
+              disabled={loading}
             />
+
             <Input
               label="Phone"
               name="phone"
@@ -168,36 +201,50 @@ export default function AddEmployee() {
               required
               value={form.phone}
               onChange={handleChange}
+              disabled={loading}
             />
           </div>
 
+          {/* Role & Employment */}
           <div className="space-y-5">
             <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-              <h3 className="text-lg font-semibold text-slate-900">Role & employment</h3>
+              <h3 className="text-lg font-semibold text-slate-900">
+                Role & employment
+              </h3>
+
               <p className="mt-1 text-sm text-slate-500">
                 Capture the role, compensation, and employment state.
               </p>
             </div>
 
+            {/* Department */}
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Department <span className="text-rose-500">*</span>
+                Department{" "}
+                <span className="text-rose-500">*</span>
               </label>
+
               <select
                 name="department"
                 value={form.department}
                 onChange={handleChange}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                disabled={loading}
+                className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
               >
                 <option value="">Select department</option>
+
                 {departments.map((department) => (
-                  <option key={department} value={department}>
+                  <option
+                    key={department}
+                    value={department}
+                  >
                     {department}
                   </option>
                 ))}
               </select>
             </div>
 
+            {/* Position */}
             <Input
               label="Position"
               name="position"
@@ -205,16 +252,23 @@ export default function AddEmployee() {
               required
               value={form.position}
               onChange={handleChange}
+              disabled={loading}
             />
+
+            {/* Salary */}
             <Input
               label="Salary"
               name="salary"
               icon={HiOutlineCurrencyDollar}
+              type="number"
               placeholder="120000"
               required
               value={form.salary}
               onChange={handleChange}
+              disabled={loading}
             />
+
+            {/* Joining Date */}
             <Input
               label="Joining Date"
               name="joiningDate"
@@ -223,21 +277,30 @@ export default function AddEmployee() {
               required
               value={form.joiningDate}
               onChange={handleChange}
+              disabled={loading}
             />
 
+            {/* Status */}
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Status <span className="text-rose-500">*</span>
+                Status{" "}
+                <span className="text-rose-500">*</span>
               </label>
+
               <select
                 name="status"
                 value={form.status}
                 onChange={handleChange}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                disabled={loading}
+                className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
               >
                 <option value="">Select status</option>
+
                 {statuses.map((status) => (
-                  <option key={status} value={status}>
+                  <option
+                    key={status}
+                    value={status}
+                  >
                     {status}
                   </option>
                 ))}
@@ -245,12 +308,22 @@ export default function AddEmployee() {
             </div>
           </div>
 
-          <div className="lg:col-span-2 flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
-            <Button variant="outline" to="/employees">
+          {/* Actions */}
+          <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end lg:col-span-2">
+            <Button
+              variant="outline"
+              to="/employees"
+              disabled={loading}
+            >
               Discard
             </Button>
-            <Button variant="primary" type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Save Employee"}
+
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? "Creating..." : "Save Employee"}
             </Button>
           </div>
         </form>

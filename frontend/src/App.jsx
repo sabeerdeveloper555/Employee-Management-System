@@ -14,13 +14,39 @@ function App() {
   return (
     <BrowserRouter>
       <Layout>
-        <Suspense fallback={<LoadingOverlay visible label="Loading page..." />}>
+        <Suspense
+          fallback={
+            <LoadingOverlay
+              visible
+              label="Loading page..."
+            />
+          }
+        >
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/employees" element={<Employees />} />
-            <Route path="/employees/add" element={<AddEmployee />} />
-            <Route path="/employees/edit/:id" element={<EditEmployee />} />
-            <Route path="*" element={<NotFound />} />
+            <Route
+              path="/"
+              element={<Dashboard />}
+            />
+
+            <Route
+              path="/employees"
+              element={<Employees />}
+            />
+
+            <Route
+              path="/employees/add"
+              element={<AddEmployee />}
+            />
+
+            <Route
+              path="/employees/edit/:id"
+              element={<EditEmployee />}
+            />
+
+            <Route
+              path="*"
+              element={<NotFound />}
+            />
           </Routes>
         </Suspense>
       </Layout>
