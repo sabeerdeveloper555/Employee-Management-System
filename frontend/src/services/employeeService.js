@@ -27,7 +27,8 @@ export const deleteEmployee = async (id) => {
   return response.data;
 };
 
-export const getDashboardData = async () => {
-  const response = await API.get(`${EMPLOYEE_API}/dashboard`);
+export const getDashboardData = async (range = "all") => {
+  const response = await API.get(`/employees/dashboard?range=${range}`);
+
   return response.data;
 };
