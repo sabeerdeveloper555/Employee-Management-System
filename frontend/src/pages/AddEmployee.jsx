@@ -125,8 +125,7 @@ export default function AddEmployee() {
       navigate("/employees");
     } catch (error) {
       const message =
-        error?.response?.data?.message ||
-        "Unable to create employee.";
+        error?.response?.data?.message || "Unable to create employee.";
 
       toast.error(message);
     } finally {
@@ -141,11 +140,7 @@ export default function AddEmployee() {
         title="Add Employee"
         subtitle="Create a polished employee profile with the right details from the start."
         actions={
-          <Button
-            variant="outline"
-            to="/employees"
-            disabled={loading}
-          >
+          <Button variant="outline" to="/employees" disabled={loading}>
             Cancel
           </Button>
         }
@@ -153,10 +148,7 @@ export default function AddEmployee() {
 
       {/* Form Card */}
       <Card className="border-slate-200/80">
-        <form
-          className="grid gap-6 lg:grid-cols-2"
-          onSubmit={handleSubmit}
-        >
+        <form className="grid gap-6 lg:grid-cols-2" onSubmit={handleSubmit}>
           {/* Profile Details */}
           <div className="space-y-5">
             <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
@@ -219,12 +211,14 @@ export default function AddEmployee() {
 
             {/* Department */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Department{" "}
-                <span className="text-rose-500">*</span>
+              <label
+                htmlFor="department"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                Department <span className="text-rose-500">*</span>
               </label>
-
               <select
+                id="department"
                 name="department"
                 value={form.department}
                 onChange={handleChange}
@@ -234,10 +228,7 @@ export default function AddEmployee() {
                 <option value="">Select department</option>
 
                 {departments.map((department) => (
-                  <option
-                    key={department}
-                    value={department}
-                  >
+                  <option key={department} value={department}>
                     {department}
                   </option>
                 ))}
@@ -282,12 +273,15 @@ export default function AddEmployee() {
 
             {/* Status */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Status{" "}
-                <span className="text-rose-500">*</span>
+              <label
+                htmlFor="status"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                Status <span className="text-rose-500">*</span>
               </label>
 
               <select
+                id="status"
                 name="status"
                 value={form.status}
                 onChange={handleChange}
@@ -297,10 +291,7 @@ export default function AddEmployee() {
                 <option value="">Select status</option>
 
                 {statuses.map((status) => (
-                  <option
-                    key={status}
-                    value={status}
-                  >
+                  <option key={status} value={status}>
                     {status}
                   </option>
                 ))}
@@ -310,19 +301,11 @@ export default function AddEmployee() {
 
           {/* Actions */}
           <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end lg:col-span-2">
-            <Button
-              variant="outline"
-              to="/employees"
-              disabled={loading}
-            >
+            <Button variant="outline" to="/employees" disabled={loading}>
               Discard
             </Button>
 
-            <Button
-              variant="primary"
-              type="submit"
-              disabled={loading}
-            >
+            <Button variant="primary" type="submit" disabled={loading}>
               {loading ? "Creating..." : "Save Employee"}
             </Button>
           </div>

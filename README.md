@@ -1,8 +1,8 @@
 # Employee Management System
 
-A modern, responsive, and full-stack Employee Management System built with the **MERN stack**.
+A modern, responsive, full-stack **Employee Management System** built with the **MERN stack**.
 
-The application helps organizations manage employee records through a clean and intuitive interface. It includes complete CRUD functionality, employee search and filtering, sorting, pagination, dashboard statistics, data visualization, loading states, error handling, and responsive UI.
+The application helps organizations manage employee records through a clean and intuitive interface. It provides complete CRUD functionality, employee search and filtering, sorting, pagination, dashboard statistics, data visualization, form validation, error handling, and automated testing.
 
 This project was developed as part of my **Full Stack Developer internship at NeuroFive Solutions**.
 
@@ -24,11 +24,17 @@ This project was developed as part of my **Full Stack Developer internship at Ne
   - Joining date
 - Pagination
 - Combined search, filtering, sorting, and pagination
-- Form validation
+- Frontend form validation
+- Backend validation
 - Toast notifications
+- Loading states
+- Error handling
 - Automatic pagination adjustment after employee deletion
+- Prevention of duplicate form submission
 
-### Dashboard & Data Visualization
+---
+
+## Dashboard & Data Visualization
 
 The dashboard provides a visual overview of the employee database.
 
@@ -47,9 +53,11 @@ The dashboard provides a visual overview of the employee database.
 - Error states
 - Empty states
 
-### Backend Data Aggregation
+---
 
-Dashboard information is processed on the backend using MongoDB aggregation.
+## Backend Data Aggregation
+
+Dashboard information is processed on the backend using MongoDB queries and aggregation.
 
 The backend can calculate:
 
@@ -87,6 +95,14 @@ The backend can calculate:
 - dotenv
 - CORS
 
+## Testing
+
+- Vitest
+- React Testing Library
+- Jest
+- Supertest
+- Playwright
+
 ---
 
 # Project Structure
@@ -99,10 +115,14 @@ Employee-Management-System/
 │   ├── controllers/
 │   │   └── employeeController.js
 │   ├── middleware/
+│   │   ├── asyncHandler.js
+│   │   └── errorHandler.js
 │   ├── models/
 │   │   └── Employee.js
 │   ├── routes/
 │   │   └── employeeRoutes.js
+│   ├── test/
+│   │   └── employee.test.js
 │   ├── .env.example
 │   ├── package.json
 │   └── server.js
@@ -114,26 +134,86 @@ Employee-Management-System/
 │   │   ├── components/
 │   │   │   ├── common/
 │   │   │   ├── dashboard/
-│   │   │   │   ├── DepartmentChart.jsx
-│   │   │   │   ├── JoiningTrendChart.jsx
-│   │   │   │   └── StatusChart.jsx
 │   │   │   └── layout/
-│   │   ├── layouts/
 │   │   ├── pages/
-│   │   │   └── Dashboard.jsx
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── Employees.jsx
+│   │   │   ├── AddEmployee.jsx
+│   │   │   ├── EditEmployee.jsx
+│   │   │   └── NotFound.jsx
 │   │   ├── services/
 │   │   │   ├── axios.js
 │   │   │   └── employeeService.js
 │   │   ├── store/
 │   │   │   └── dashboardStore.js
-│   │   ├── utils/
+│   │   ├── test/
+│   │   │   ├── setup.js
+│   │   │   ├── AddEmployee.test.jsx
+│   │   │   └── example.test.jsx
 │   │   ├── App.jsx
 │   │   └── main.jsx
 │   │
+│   ├── tests/
+│   │   └── employee-flow.spec.js
+│   ├── vitest.config.js
+│   ├── playwright.config.js
 │   ├── .env.example
 │   └── package.json
 │
 └── README.md
+```
+
+---
+
+# Application Architecture
+
+```text
+                         ┌──────────────────────┐
+                         │        User          │
+                         │     Web Browser      │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │      React.js        │
+                         │  Pages & Components  │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │    Zustand Store     │
+                         │    Global State      │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │       Axios          │
+                         │    HTTP Requests     │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │    Express.js API    │
+                         │   RESTful Endpoints  │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │ Employee Controller  │
+                         │ Validation & Logic   │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │ Mongoose Employee    │
+                         │        Model         │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │       MongoDB        │
+                         │   Employee Database  │
+                         └──────────────────────┘
 ```
 
 ---
@@ -176,7 +256,7 @@ Start the backend development server:
 npm run dev
 ```
 
-The backend will run on:
+Backend:
 
 ```text
 http://localhost:5000
@@ -204,13 +284,13 @@ Create a `.env` file inside the `frontend` folder:
 VITE_API_URL=http://localhost:5000/api
 ```
 
-Run the frontend:
+Start the frontend:
 
 ```bash
 npm run dev
 ```
 
-The frontend will be available at:
+Frontend:
 
 ```text
 http://localhost:5173
@@ -231,90 +311,221 @@ http://localhost:5173
 
 ---
 
+# Validation & Error Handling
 
-# Application Flow Diagram
+The application includes validation and error handling at both frontend and backend levels.
 
-The following diagram shows how a user interacts with the Employee Management System and how data moves through the application:
+### Employee Validation
+
+- Full name is required
+- Email is required
+- Email format validation
+- Phone number is required
+- Department is required
+- Position is required
+- Salary must be greater than zero
+- Joining date is required
+- Employee status supports `Active` and `Inactive`
+
+### UI States
+
+- Loading states
+- Loading skeletons
+- Error messages
+- Empty states
+- Retry actions
+- Success toast notifications
+- Error toast notifications
+- Duplicate submission prevention
+
+---
+
+# Testing
+
+The project uses automated tests across the frontend, backend, and end-to-end application flow.
 
 ```text
-                         ┌──────────────────────┐
-                         │        User          │
-                         │  Web Browser / UI    │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │      React.js        │
-                         │  Pages & Components  │
-                         └──────────┬───────────┘
-                                    │
-                         ┌──────────▼───────────┐
-                         │   Zustand Store      │
-                         │   Global App State   │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │       Axios          │
-                         │    HTTP Requests     │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │    Express.js API    │
-                         │   RESTful Endpoints  │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │ Employee Controller  │
-                         │ Validation & Logic   │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │ Mongoose Employee    │
-                         │        Model         │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │       MongoDB        │
-                         │   Employee Database  │
-                         └──────────┬───────────┘
-                                    │
-                         Query / Aggregation
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │     REST API JSON    │
-                         │       Response       │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │   React Dashboard    │
-                         │  Tables & Statistics │
-                         └──────────┬───────────┘
-                                    │
-                  ┌─────────────────┼─────────────────┐
-                  ▼                 ▼                 ▼
-          ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-          │  Bar Chart   │  │ Line Chart   │  │ Donut Chart  │
-          │ Departments  │  │ Joining Trend│  │ Employee     │
-          │              │  │              │  │ Status       │
-          └──────────────┘  └──────────────┘  └──────────────┘
+                    Automated Testing
+                           │
+          ┌────────────────┼────────────────┐
+          │                │                │
+          ▼                ▼                ▼
+      Frontend          Backend             E2E
+       Tests             Tests             Tests
+          │                │                │
+          ▼                ▼                ▼
+     Vitest +           Jest +          Playwright
+     RTL               Supertest
+          │                │                │
+          ▼                ▼                ▼
+     Components        REST APIs       Real User Flow
+     Interactions      Validation      Browser Testing
 ```
+
+---
+
+## Frontend Tests
+
+Frontend tests use **Vitest** and **React Testing Library**.
+
+Current tests include:
+
+- Employee form rendering
+- Successful employee creation
+- Employee creation failure handling
+- Duplicate submission prevention
+- Basic JavaScript functionality
+
+Frontend test files:
+
+```text
+frontend/src/test/AddEmployee.test.jsx
+frontend/src/test/example.test.jsx
+```
+
+Run frontend tests:
+
+```bash
+cd frontend
+npx vitest run
+```
+
+Current result:
+
+```text
+Test Files  2 passed
+Tests       6 passed
+```
+
+---
+
+## Backend Tests
+
+Backend API tests use **Jest** and **Supertest**.
+
+The current backend test suite covers:
+
+- API health check
+- Successful employee creation
+- Missing full name validation
+- Invalid email validation
+- Missing phone validation
+
+Backend test file:
+
+```text
+backend/test/employee.test.js
+```
+
+Run backend tests:
+
+```bash
+cd backend
+npm test
+```
+
+Current result:
+
+```text
+Test Suites: 1 passed
+Tests:       5 passed
+```
+
+---
+
+# End-to-End Testing
+
+The project uses **Playwright** for browser-based end-to-end testing.
+
+The current E2E test simulates a real employee creation flow:
+
+```text
+Open Application
+       ↓
+Open Add Employee
+       ↓
+Verify Add Employee Page
+       ↓
+Fill Employee Information
+       ↓
+Select Department
+       ↓
+Select Status
+       ↓
+Submit Employee Form
+       ↓
+Employee Created
+       ↓
+Navigate to Employees
+```
+
+Playwright configuration:
+
+```text
+frontend/playwright.config.js
+```
+
+E2E test:
+
+```text
+frontend/tests/employee-flow.spec.js
+```
+
+Run the E2E test:
+
+```bash
+cd frontend
+npx playwright test tests/employee-flow.spec.js
+```
+
+Current result:
+
+```text
+1 passed
+```
+
+To view the Playwright HTML report:
+
+```bash
+npx playwright show-report
+```
+
+---
+
+# Running All Tests
+
+### 1. Frontend Tests
+
+```bash
+cd frontend
+npx vitest run
+```
+
+### 2. Backend Tests
+
+```bash
+cd backend
+npm test
+```
+
+### 3. End-to-End Test
+
+```bash
+cd frontend
+npx playwright test tests/employee-flow.spec.js
+```
+
+> The Playwright E2E test automatically starts the Vite development server through `playwright.config.js` when required.
 
 ---
 
 # Dashboard Architecture
 
-The dashboard follows a simple full-stack data flow:
+The dashboard follows a full-stack data flow:
 
 ```text
 ┌──────────────────────────┐
-│       React Dashboard    │
+│      React Dashboard     │
 └────────────┬─────────────┘
              │
              ▼
@@ -352,7 +563,7 @@ The dashboard follows a simple full-stack data flow:
 
 ## Department Distribution
 
-A bar chart displays the number of employees across departments such as:
+A bar chart displays the number of employees across:
 
 - IT
 - HR
@@ -366,46 +577,20 @@ A line chart visualizes employee joining activity over time using employee `join
 
 ## Employee Status
 
-A donut chart provides a quick comparison between:
+A donut chart provides a comparison between:
 
 - Active employees
 - Inactive employees
 
 ## Recent Employees
 
-The dashboard displays the latest employee records with:
+The dashboard displays recent employee records with:
 
 - Name
 - Email
 - Department
 - Position
 - Status
-
----
-
-# Validation & Error Handling
-
-The application includes validation and error handling at both frontend and backend levels.
-
-### Employee Validation
-
-- Full name is required
-- Email is required
-- Email format validation
-- Phone number is required
-- Department is required
-- Position is required
-- Salary must be greater than zero
-- Joining date is required
-- Employee status supports `Active` and `Inactive`
-
-### UI States
-
-- Loading skeletons
-- Error messages
-- Empty states
-- Retry actions
-- Success/error toast notifications
 
 ---
 
@@ -441,6 +626,16 @@ The application includes validation and error handling at both frontend and back
 - [x] Responsive dashboard
 - [x] Real employee data testing
 
+## Automated Testing
+
+- [x] Frontend Vitest tests
+- [x] React Testing Library tests
+- [x] Backend Jest tests
+- [x] Supertest API tests
+- [x] Playwright E2E test
+- [x] Test documentation
+- [ ] Full test-suite demo video
+
 ---
 
 # Learning Outcomes
@@ -453,15 +648,16 @@ This project provided practical experience in:
 - React component architecture
 - CRUD operations
 - Zustand state management
-- API integration using Axios
+- Axios API integration
 - Recharts data visualization
 - Responsive dashboard development
 - Form validation
 - Error handling
 - Loading state management
+- Automated testing
+- End-to-end testing
 - Debugging full-stack data flow
 - Working with real-world test data
-- Building scalable full-stack applications
 
 ---
 
@@ -489,7 +685,7 @@ Potential future improvements include:
 
 This project was developed as part of my **Full Stack Developer internship at NeuroFive Solutions**.
 
-The dashboard and employee management work focused on transforming backend employee data into a clean, responsive, and meaningful management interface.
+The project focused on building a complete employee management platform, transforming backend employee data into a clean and responsive management dashboard, and validating the application through automated frontend, backend, and end-to-end tests.
 
 ### Development Flow
 
@@ -509,6 +705,8 @@ React Dashboard
 Charts & Statistics
         ↓
 Responsive User Interface
+        ↓
+Automated Testing
 ```
 
 ---
