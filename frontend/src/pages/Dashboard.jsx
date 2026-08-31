@@ -1,640 +1,480 @@
-import { lazy, Suspense, useEffect, useMemo } from "react";
+import {
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Link } from "react-router-dom";
 import {
-  HiOutlineBriefcase,
-  HiOutlineUserAdd,
-  HiOutlineUsers,
-  HiOutlineArrowRight,
-  HiOutlinePlus,
-  HiOutlineOfficeBuilding,
-} from "react-icons/hi";
+  Users,
+  UserCheck,
+  UserX,
+  UserPlus,
+  ArrowRight,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
-import Card from "../components/common/Card";
-import Button from "../components/common/Button";
-import Badge from "../components/common/Badge";
 import Header from "../components/layout/Header";
+import Card from "../components/common/Card";
 import DashboardFilter from "../components/dashboard/DashboardFilter";
-import useDashboardStore from "../store/dashboardStore";
+import { getDashboardData } from "../services/employeeService";
 
-// Lazy-load charts so they are not included in the initial dashboard bundle.
 const DepartmentChart = lazy(
-  () => import("../components/dashboard/DepartmentChart"),
+  () => import("../components/dashboard/DepartmentChart")
 );
 
 const JoiningTrendChart = lazy(
-  () => import("../components/dashboard/JoiningTrendChart"),
+  () => import("../components/dashboard/JoiningTrendChart")
 );
 
-const StatusChart = lazy(() => import("../components/dashboard/StatusChart"));
+const StatusChart = lazy(
+  () => import("../components/dashboard/StatusChart")
+);
 
-const quickActions = [
-  "Review onboarding tasks",
-  "Approve leave requests",
-  "Prepare monthly payroll",
-];
-
-function Dashboard() {
-  const { dashboardData, loading, error, selectedRange, fetchDashboardData } =
-    useDashboardStore();
-
-  useEffect(() => {
-    fetchDashboardData("7d");
-  }, [fetchDashboardData]);
-
-  useEffect(() => {
-    const loadCharts = () => {
-      setShowCharts(true);
-    };
-
-    if ("requestIdleCallback" in window) {
-      const idleId = window.requestIdleCallback(loadCharts, {
-        timeout: 1500,
-      });
-
-      return () => {
-        window.cancelIdleCallback(idleId);
-      };
-    }
-
-    const timeoutId = window.setTimeout(loadCharts, 800);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, []);
-
-  // --------------------------------------------------
-  // Dashboard Statistics
-  // --------------------------------------------------
-
-  const stats = useMemo(() => {
-    if (!dashboardData) {
-      return [];
-    }
-
-    const totalEmployees = dashboardData.totalEmployees || 0;
-    const activeEmployees = dashboardData.activeEmployees || 0;
-    const inactiveEmployees = dashboardData.inactiveEmployees || 0;
-    const totalDepartments = dashboardData.totalDepartments || 0;
-
-    const activeRatio = totalEmployees
-      ? Math.round((activeEmployees / totalEmployees) * 100)
-      : 0;
-
-    return [
-      {
-        title: "Total Employees",
-        value: totalEmployees,
-        change: `${totalEmployees} team members`,
-        icon: HiOutlineUsers,
-        accent: "bg-indigo-50 text-indigo-600",
-      },
-      {
-        title: "Active Employees",
-        value: activeEmployees,
-        change: `${activeRatio}% active`,
-        icon: HiOutlineBriefcase,
-        accent: "bg-emerald-50 text-emerald-600",
-      },
-      {
-        title: "Inactive Employees",
-        value: inactiveEmployees,
-        change:
-          inactiveEmployees > 0 ? "Need follow-up" : "All employees active",
-        icon: HiOutlineUserAdd,
-        accent: "bg-amber-50 text-amber-600",
-      },
-      {
-        title: "Departments",
-        value: totalDepartments,
-        change: "Cross-functional",
-        icon: HiOutlineOfficeBuilding,
-        accent: "bg-slate-100 text-slate-700",
-      },
-    ];
-  }, [dashboardData]);
-
-  // --------------------------------------------------
-  // Dashboard Data
-  // --------------------------------------------------
-
-  const recentEmployees = dashboardData?.recentEmployees || [];
-  const departmentStats = dashboardData?.departmentStats || [];
-  const statusStats = dashboardData?.statusStats || [];
-  const joiningTrend = dashboardData?.joiningTrend || [];
-
-  const totalEmployees = dashboardData?.totalEmployees || 0;
-  const activeEmployees = dashboardData?.activeEmployees || 0;
-  const inactiveEmployees = dashboardData?.inactiveEmployees || 0;
-
-  const activePercentage = totalEmployees
-    ? Math.round((activeEmployees / totalEmployees) * 100)
-    : 0;
-
-  const inactivePercentage = totalEmployees
-    ? Math.round((inactiveEmployees / totalEmployees) * 100)
-    : 0;
-
-  // --------------------------------------------------
-  // Chart Loading Skeleton
-  // Fixed height prevents layout shift.
-  // --------------------------------------------------
-
-  const chartFallback = (
-    <div className="h-[320px] w-full rounded-2xl border border-slate-200 bg-white">
-      <div className="flex h-full items-center justify-center">
-        <div className="text-sm text-slate-500">Loading chart...</div>
+const ChartLoader = memo(function ChartLoader() {
+  return (
+    <div className="flex h-[320px] items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-slate-700" />
+        <span className="text-sm text-slate-500">
+          Loading chart...
+        </span>
       </div>
     </div>
   );
+});
 
-  // --------------------------------------------------
-  // Selected Range Label
-  // --------------------------------------------------
-
-  const selectedRangeLabel =
-    selectedRange === "7d"
-      ? "Last 7 Days"
-      : selectedRange === "30d"
-        ? "Last 30 Days"
-        : "This Year";
-
+const StatCard = memo(function StatCard({
+  title,
+  value,
+  icon: Icon,
+  description,
+}) {
   return (
-    <div className="space-y-6">
-      {/* -------------------------------------------- */}
-      {/* Header */}
-      {/* -------------------------------------------- */}
+    <Card>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-slate-500">
+            {title}
+          </p>
 
-      <Header
-        title="Dashboard"
-        subtitle="A real-time overview of your workforce and key employee insights."
-        actions={
-          <div className="flex flex-wrap items-center gap-3">
-            <DashboardFilter
-              value={selectedRange}
-              onChange={fetchDashboardData}
-            />
+          <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+            {value}
+          </p>
 
-            <Button to="/employees/add" icon={HiOutlinePlus} variant="primary">
-              Add Employee
-            </Button>
-          </div>
-        }
-      />
-
-      {/* -------------------------------------------- */}
-      {/* Error Message */}
-      {/* -------------------------------------------- */}
-
-      {error && (
-        <Card>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-rose-600">
-                Dashboard Error
-              </p>
-
-              <p className="mt-1 text-sm text-slate-500">{error}</p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => fetchDashboardData(selectedRange)}
-              className="w-fit rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-            >
-              Try Again
-            </button>
-          </div>
-        </Card>
-      )}
-
-      {/* -------------------------------------------- */}
-      {/* Statistics */}
-      {/* -------------------------------------------- */}
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {loading
-          ? Array.from({ length: 4 }).map((_, index) => (
-            <Card key={`stat-skeleton-${index}`} hover>
-              <div className="space-y-3">
-                <div className="h-4 w-28 animate-pulse rounded bg-slate-200" />
-
-                <div className="h-8 w-20 animate-pulse rounded bg-slate-200" />
-
-                <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
-              </div>
-            </Card>
-          ))
-          : stats.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <Card key={item.title} hover>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">
-                      {item.title}
-                    </p>
-
-                    <p className="mt-2 text-3xl font-semibold text-slate-900">
-                      {item.value}
-                    </p>
-
-                    <p className="mt-2 text-sm text-slate-500">
-                      {item.change}
-                    </p>
-                  </div>
-
-                  <div className={`rounded-2xl p-3 ${item.accent}`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-      </div>
-
-      {/* -------------------------------------------- */}
-      {/* Workforce Analytics */}
-      {/* -------------------------------------------- */}
-
-      <section>
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold text-slate-900">
-            Workforce Analytics
-          </h2>
-
-          <p className="mt-1 text-sm text-slate-500">
-            Visual insights based on your employee data.
+          <p className="mt-1 text-xs text-slate-500">
+            {description}
           </p>
         </div>
 
-        {/* 
-          One Suspense boundary for all charts.
-          This reduces unnecessary loading boundary overhead.
-        */}
-        <Suspense fallback={chartFallback}>
-          <div className="grid gap-6 xl:grid-cols-2">
-            {showCharts ? (
-              <>
-                <Suspense fallback={chartFallback}>
-                  <DepartmentChart data={departmentStats} />
-                </Suspense>
-
-                <Suspense fallback={chartFallback}>
-                  <JoiningTrendChart data={joiningTrend} />
-                </Suspense>
-              </>
-            ) : (
-              <>
-                {chartFallback}
-                {chartFallback}
-              </>
-            )}
-          </div>
-
-          <div className="mt-6 grid gap-6 xl:grid-cols-2">
-            {showCharts ? (
-              <Suspense fallback={chartFallback}>
-                <StatusChart data={statusStats} />
-              </Suspense>
-            ) : (
-              chartFallback
-            )}
-
-            {/* -------------------------------------- */}
-            {/* Workforce Summary */}
-            {/* -------------------------------------- */}
-
-            <Card>
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  Workforce Summary
-                </h3>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Current employee status overview.
-                </p>
-              </div>
-
-              <div className="space-y-6">
-                {/* Active Employees */}
-
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-600">
-                      Active Employees
-                    </span>
-
-                    <span className="text-sm font-semibold text-slate-900">
-                      {activeEmployees}
-                    </span>
-                  </div>
-
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                      style={{
-                        width: `${activePercentage}%`,
-                      }}
-                    />
-                  </div>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    {activePercentage}% of total employees
-                  </p>
-                </div>
-
-                {/* Inactive Employees */}
-
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-600">
-                      Inactive Employees
-                    </span>
-
-                    <span className="text-sm font-semibold text-slate-900">
-                      {inactiveEmployees}
-                    </span>
-                  </div>
-
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="h-full rounded-full bg-amber-500 transition-all duration-500"
-                      style={{
-                        width: `${inactivePercentage}%`,
-                      }}
-                    />
-                  </div>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    {inactivePercentage}% of total employees
-                  </p>
-                </div>
-
-                {/* Total Departments */}
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-slate-500">
-                        Total Departments
-                      </p>
-
-                      <p className="mt-1 text-2xl font-semibold text-slate-900">
-                        {dashboardData?.totalDepartments || 0}
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl bg-white p-3 text-slate-600 shadow-sm">
-                      <HiOutlineOfficeBuilding className="h-5 w-5" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </Suspense>
-      </section>
-
-      {/* -------------------------------------------- */}
-      {/* Recent Employees + Right Sidebar */}
-      {/* -------------------------------------------- */}
-
-      <div className="grid gap-6 xl:grid-cols-[1.7fr_0.9fr]">
-        {/* ------------------------------------------ */}
-        {/* Recent Employees */}
-        {/* ------------------------------------------ */}
-
-        <Card padded={false} className="overflow-hidden">
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">
-                Recent Employees
-              </h3>
-
-              <p className="text-sm text-slate-500">
-                Latest team activity and status updates.
-              </p>
-            </div>
-
-            <Button to="/employees" variant="ghost" size="sm">
-              View all
-            </Button>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-500">
-                <tr>
-                  <th className="px-5 py-3 font-medium sm:px-6">Name</th>
-
-                  <th className="px-5 py-3 font-medium sm:px-6">Department</th>
-
-                  <th className="px-5 py-3 font-medium sm:px-6">Role</th>
-
-                  <th className="px-5 py-3 font-medium sm:px-6">Status</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {/* Loading */}
-
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, index) => (
-                    <tr
-                      key={`employee-skeleton-${index}`}
-                      className="border-t border-slate-200/80"
-                    >
-                      <td className="px-5 py-4 sm:px-6">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-slate-200" />
-
-                          <div className="space-y-2">
-                            <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
-
-                            <div className="h-3 w-40 animate-pulse rounded bg-slate-200" />
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-5 py-4 sm:px-6">
-                        <div className="h-4 w-20 animate-pulse rounded bg-slate-200" />
-                      </td>
-
-                      <td className="px-5 py-4 sm:px-6">
-                        <div className="h-4 w-24 animate-pulse rounded bg-slate-200" />
-                      </td>
-
-                      <td className="px-5 py-4 sm:px-6">
-                        <div className="h-6 w-16 animate-pulse rounded-full bg-slate-200" />
-                      </td>
-                    </tr>
-                  ))
-                ) : recentEmployees.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="px-5 py-10 text-center text-sm text-slate-500 sm:px-6"
-                    >
-                      No recent employees found.
-                    </td>
-                  </tr>
-                ) : (
-                  recentEmployees.map((employee) => {
-                    const initials = employee.fullName
-                      ?.split(" ")
-                      .map((part) => part[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase();
-
-                    return (
-                      <tr
-                        key={employee._id || employee.email}
-                        className="border-t border-slate-200/80 transition hover:bg-slate-50"
-                      >
-                        <td className="px-5 py-4 sm:px-6">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700">
-                              {initials || "NA"}
-                            </div>
-
-                            <div className="min-w-0">
-                              <p className="truncate font-semibold text-slate-800">
-                                {employee.fullName}
-                              </p>
-
-                              <p className="truncate text-sm text-slate-500">
-                                {employee.email}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="px-5 py-4 text-slate-600 sm:px-6">
-                          {employee.department}
-                        </td>
-
-                        <td className="px-5 py-4 text-slate-600 sm:px-6">
-                          {employee.position}
-                        </td>
-
-                        <td className="px-5 py-4 sm:px-6">
-                          <Badge
-                            variant={
-                              employee.status === "Active"
-                                ? "success"
-                                : "warning"
-                            }
-                          >
-                            {employee.status}
-                          </Badge>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        {/* ------------------------------------------ */}
-        {/* Right Sidebar */}
-        {/* ------------------------------------------ */}
-
-        <div className="space-y-6">
-          {/* Quick Actions */}
-
-          <Card>
-            <div>
-              <p className="text-sm font-medium text-slate-500">
-                Quick Actions
-              </p>
-
-              <h3 className="mt-1 text-lg font-semibold text-slate-900">
-                Stay ahead
-              </h3>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {quickActions.map((item) => (
-                <div
-                  key={item}
-                  className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3"
-                >
-                  <span className="text-sm font-medium text-slate-700">
-                    {item}
-                  </span>
-
-                  <Link
-                    to="/employees"
-                    className="text-indigo-600 transition hover:text-indigo-700"
-                    aria-label={`Go to employees for ${item}`}
-                  >
-                    <HiOutlineArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Data Insights */}
-
-          <Card>
-            <div>
-              <p className="text-sm font-medium text-slate-500">
-                Data Insights
-              </p>
-
-              <h3 className="mt-1 text-lg font-semibold text-slate-900">
-                Workforce snapshot
-              </h3>
-            </div>
-
-            <div className="mt-5 space-y-4">
-              {/* Active Rate */}
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                  Active Rate
-                </p>
-
-                <p className="mt-1 text-2xl font-semibold text-slate-900">
-                  {activePercentage}%
-                </p>
-              </div>
-
-              {/* Departments */}
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                  Departments
-                </p>
-
-                <p className="mt-1 text-2xl font-semibold text-slate-900">
-                  {dashboardData?.totalDepartments || 0}
-                </p>
-              </div>
-
-              {/* Selected Range */}
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                  Selected Range
-                </p>
-
-                <p className="mt-1 text-lg font-semibold text-slate-900">
-                  {selectedRangeLabel}
-                </p>
-              </div>
-            </div>
-          </Card>
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
+          <Icon className="h-5 w-5 text-slate-700" />
         </div>
       </div>
+    </Card>
+  );
+});
+
+function Dashboard() {
+  const [range, setRange] = useState("7d");
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchDashboard = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await getDashboardData(range);
+
+      const data = response?.data ?? response;
+
+      setDashboard(data);
+    } catch (err) {
+      console.error("Dashboard fetch error:", err);
+
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Unable to load dashboard data.";
+
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [range]);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
+
+  const stats = useMemo(() => {
+    if (!dashboard) {
+      return {
+        totalEmployees: 0,
+        activeEmployees: 0,
+        inactiveEmployees: 0,
+        newEmployees: 0,
+      };
+    }
+
+    return {
+      totalEmployees:
+        dashboard.totalEmployees ??
+        dashboard.total ??
+        dashboard.stats?.totalEmployees ??
+        0,
+
+      activeEmployees:
+        dashboard.activeEmployees ??
+        dashboard.active ??
+        dashboard.stats?.activeEmployees ??
+        0,
+
+      inactiveEmployees:
+        dashboard.inactiveEmployees ??
+        dashboard.inactive ??
+        dashboard.stats?.inactiveEmployees ??
+        0,
+
+      newEmployees:
+        dashboard.newEmployees ??
+        dashboard.newHires ??
+        dashboard.stats?.newEmployees ??
+        0,
+    };
+  }, [dashboard]);
+
+  const chartData = useMemo(() => {
+    if (!dashboard) {
+      return {
+        departmentData: [],
+        joiningTrendData: [],
+        statusData: [],
+      };
+    }
+
+    return {
+      departmentData:
+        dashboard.departmentStats ??
+        dashboard.departmentData ??
+        dashboard.employeesByDepartment ??
+        dashboard.departments ??
+        [],
+
+      joiningTrendData:
+        dashboard.joiningTrend ??
+        dashboard.joiningTrendData ??
+        dashboard.joiningData ??
+        [],
+
+      statusData:
+        dashboard.statusStats ??
+        dashboard.statusData ??
+        dashboard.employeesByStatus ??
+        dashboard.status ??
+        [],
+    };
+  }, [dashboard]);
+
+  const handleRangeChange = useCallback((value) => {
+    setRange(value);
+  }, []);
+
+  if (loading && !dashboard) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+
+        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mb-6">
+            <div className="h-8 w-40 animate-pulse rounded-lg bg-slate-200" />
+
+            <div className="mt-2 h-4 w-80 animate-pulse rounded bg-slate-200" />
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((item) => (
+              <Card key={item}>
+                <div className="animate-pulse">
+                  <div className="h-4 w-24 rounded bg-slate-200" />
+
+                  <div className="mt-3 h-8 w-16 rounded bg-slate-200" />
+
+                  <div className="mt-2 h-3 w-28 rounded bg-slate-200" />
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {[1, 2, 3, 4].map((item) => (
+              <Card key={item}>
+                <div className="animate-pulse">
+                  <div className="h-5 w-40 rounded bg-slate-200" />
+
+                  <div className="mt-5 h-[280px] rounded-lg bg-slate-100" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error && !dashboard) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+
+        <main className="mx-auto flex min-h-[70vh] max-w-7xl items-center justify-center px-4">
+          <Card>
+            <div className="p-6 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                <UserX className="h-6 w-6 text-red-600" />
+              </div>
+
+              <h2 className="mt-4 text-lg font-semibold text-slate-900">
+                Unable to load dashboard
+              </h2>
+
+              <p className="mt-2 text-sm text-slate-500">
+                {error}
+              </p>
+
+              <button
+                type="button"
+                onClick={fetchDashboard}
+                className="mt-5 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              >
+                Try Again
+              </button>
+            </div>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  const activePercentage =
+    stats.totalEmployees > 0
+      ? Math.min(
+          100,
+          Math.round(
+            (stats.activeEmployees / stats.totalEmployees) * 100
+          )
+        )
+      : 0;
+
+  const inactivePercentage =
+    stats.totalEmployees > 0
+      ? Math.min(
+          100,
+          Math.round(
+            (stats.inactiveEmployees / stats.totalEmployees) * 100
+          )
+        )
+      : 0;
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <Header />
+
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              Dashboard
+            </h1>
+
+            <p className="mt-1 text-sm text-slate-500">
+              A real-time overview of your workforce and key employee
+              insights.
+            </p>
+          </div>
+
+          <DashboardFilter
+            value={range}
+            onChange={handleRangeChange}
+          />
+        </div>
+
+        {loading && dashboard && (
+          <div className="mb-4 flex items-center gap-2 text-xs text-slate-500">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-slate-400" />
+            Updating dashboard...
+          </div>
+        )}
+
+        {error && dashboard && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <section
+          aria-label="Employee statistics"
+          className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <StatCard
+            title="Total Employees"
+            value={stats.totalEmployees}
+            icon={Users}
+            description="All employees"
+          />
+
+          <StatCard
+            title="Active Employees"
+            value={stats.activeEmployees}
+            icon={UserCheck}
+            description="Currently active"
+          />
+
+          <StatCard
+            title="Inactive Employees"
+            value={stats.inactiveEmployees}
+            icon={UserX}
+            description="Currently inactive"
+          />
+
+          <StatCard
+            title="New Employees"
+            value={stats.newEmployees}
+            icon={UserPlus}
+            description="During selected period"
+          />
+        </section>
+
+        <section
+          aria-label="Employee analytics"
+          className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2"
+        >
+          <Card>
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Employees by Department
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Distribution of employees across departments.
+              </p>
+            </div>
+
+            <Suspense fallback={<ChartLoader />}>
+              <DepartmentChart
+                data={chartData.departmentData}
+              />
+            </Suspense>
+          </Card>
+
+          <Card>
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Joining Trend
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Employee joining activity over time.
+              </p>
+            </div>
+
+            <Suspense fallback={<ChartLoader />}>
+              <JoiningTrendChart
+                data={chartData.joiningTrendData}
+              />
+            </Suspense>
+          </Card>
+
+          <Card>
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Employee Status
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Current active and inactive employee distribution.
+              </p>
+            </div>
+
+            <Suspense fallback={<ChartLoader />}>
+              <StatusChart data={chartData.statusData} />
+            </Suspense>
+          </Card>
+
+          <Card>
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Workforce Summary
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Quick overview of workforce activity.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700">
+                    Active Employees
+                  </span>
+
+                  <span className="text-sm font-semibold text-slate-900">
+                    {activePercentage}%
+                  </span>
+                </div>
+
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-emerald-500"
+                    style={{
+                      width: `${activePercentage}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700">
+                    Inactive Employees
+                  </span>
+
+                  <span className="text-sm font-semibold text-slate-900">
+                    {inactivePercentage}%
+                  </span>
+                </div>
+
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-amber-500"
+                    style={{
+                      width: `${inactivePercentage}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <Link
+                to="/employees"
+                className="group flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+              >
+                <span>View all employees</span>
+
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
+          </Card>
+        </section>
+      </main>
     </div>
   );
 }
 
-export default Dashboard;
+export default memo(Dashboard);
