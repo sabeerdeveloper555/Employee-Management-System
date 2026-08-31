@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-
 import {
   HiOutlineBriefcase,
   HiOutlineUserAdd,
@@ -14,22 +13,19 @@ import Card from "../components/common/Card";
 import Button from "../components/common/Button";
 import Badge from "../components/common/Badge";
 import Header from "../components/layout/Header";
-
 import DashboardFilter from "../components/dashboard/DashboardFilter";
+import useDashboardStore from "../store/dashboardStore";
 
+// Lazy-load charts so they are not included in the initial dashboard bundle.
 const DepartmentChart = lazy(
-  () => import("../components/dashboard/DepartmentChart")
+  () => import("../components/dashboard/DepartmentChart"),
 );
 
 const JoiningTrendChart = lazy(
-  () => import("../components/dashboard/JoiningTrendChart")
+  () => import("../components/dashboard/JoiningTrendChart"),
 );
 
-const StatusChart = lazy(
-  () => import("../components/dashboard/StatusChart")
-);
-
-import useDashboardStore from "../store/dashboardStore";
+const StatusChart = lazy(() => import("../components/dashboard/StatusChart"));
 
 const quickActions = [
   "Review onboarding tasks",
@@ -38,17 +34,38 @@ const quickActions = [
 ];
 
 function Dashboard() {
-  const {
-    dashboardData,
-    loading,
-    error,
-    selectedRange,
-    fetchDashboardData,
-  } = useDashboardStore();
+  const { dashboardData, loading, error, selectedRange, fetchDashboardData } =
+    useDashboardStore();
 
   useEffect(() => {
     fetchDashboardData("7d");
   }, [fetchDashboardData]);
+
+  useEffect(() => {
+    const loadCharts = () => {
+      setShowCharts(true);
+    };
+
+    if ("requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(loadCharts, {
+        timeout: 1500,
+      });
+
+      return () => {
+        window.cancelIdleCallback(idleId);
+      };
+    }
+
+    const timeoutId = window.setTimeout(loadCharts, 800);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+
+  // --------------------------------------------------
+  // Dashboard Statistics
+  // --------------------------------------------------
 
   const stats = useMemo(() => {
     if (!dashboardData) {
@@ -83,9 +100,7 @@ function Dashboard() {
         title: "Inactive Employees",
         value: inactiveEmployees,
         change:
-          inactiveEmployees > 0
-            ? "Need follow-up"
-            : "All employees active",
+          inactiveEmployees > 0 ? "Need follow-up" : "All employees active",
         icon: HiOutlineUserAdd,
         accent: "bg-amber-50 text-amber-600",
       },
@@ -99,34 +114,57 @@ function Dashboard() {
     ];
   }, [dashboardData]);
 
+  // --------------------------------------------------
+  // Dashboard Data
+  // --------------------------------------------------
+
   const recentEmployees = dashboardData?.recentEmployees || [];
   const departmentStats = dashboardData?.departmentStats || [];
   const statusStats = dashboardData?.statusStats || [];
   const joiningTrend = dashboardData?.joiningTrend || [];
 
-  const activePercentage = dashboardData?.totalEmployees
-    ? Math.round(
-        (dashboardData.activeEmployees / dashboardData.totalEmployees) * 100
-      )
+  const totalEmployees = dashboardData?.totalEmployees || 0;
+  const activeEmployees = dashboardData?.activeEmployees || 0;
+  const inactiveEmployees = dashboardData?.inactiveEmployees || 0;
+
+  const activePercentage = totalEmployees
+    ? Math.round((activeEmployees / totalEmployees) * 100)
     : 0;
 
-  const inactivePercentage = dashboardData?.totalEmployees
-    ? Math.round(
-        (dashboardData.inactiveEmployees / dashboardData.totalEmployees) * 100
-      )
+  const inactivePercentage = totalEmployees
+    ? Math.round((inactiveEmployees / totalEmployees) * 100)
     : 0;
+
+  // --------------------------------------------------
+  // Chart Loading Skeleton
+  // Fixed height prevents layout shift.
+  // --------------------------------------------------
 
   const chartFallback = (
-    <div className="flex min-h-[300px] items-center justify-center rounded-xl border border-slate-200 bg-white">
-      <div className="text-sm text-slate-500">
-        Loading chart...
+    <div className="h-[320px] w-full rounded-2xl border border-slate-200 bg-white">
+      <div className="flex h-full items-center justify-center">
+        <div className="text-sm text-slate-500">Loading chart...</div>
       </div>
     </div>
   );
 
+  // --------------------------------------------------
+  // Selected Range Label
+  // --------------------------------------------------
+
+  const selectedRangeLabel =
+    selectedRange === "7d"
+      ? "Last 7 Days"
+      : selectedRange === "30d"
+        ? "Last 30 Days"
+        : "This Year";
+
   return (
     <div className="space-y-6">
+      {/* -------------------------------------------- */}
       {/* Header */}
+      {/* -------------------------------------------- */}
+
       <Header
         title="Dashboard"
         subtitle="A real-time overview of your workforce and key employee insights."
@@ -137,18 +175,17 @@ function Dashboard() {
               onChange={fetchDashboardData}
             />
 
-            <Button
-              to="/employees/add"
-              icon={HiOutlinePlus}
-              variant="primary"
-            >
+            <Button to="/employees/add" icon={HiOutlinePlus} variant="primary">
               Add Employee
             </Button>
           </div>
         }
       />
 
+      {/* -------------------------------------------- */}
       {/* Error Message */}
+      {/* -------------------------------------------- */}
+
       {error && (
         <Card>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -157,9 +194,7 @@ function Dashboard() {
                 Dashboard Error
               </p>
 
-              <p className="mt-1 text-sm text-slate-500">
-                {error}
-              </p>
+              <p className="mt-1 text-sm text-slate-500">{error}</p>
             </div>
 
             <button
@@ -173,49 +208,57 @@ function Dashboard() {
         </Card>
       )}
 
+      {/* -------------------------------------------- */}
       {/* Statistics */}
+      {/* -------------------------------------------- */}
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {loading
           ? Array.from({ length: 4 }).map((_, index) => (
-              <Card key={`stat-skeleton-${index}`} hover>
-                <div className="space-y-3">
-                  <div className="h-4 w-28 animate-pulse rounded bg-slate-200" />
-                  <div className="h-8 w-20 animate-pulse rounded bg-slate-200" />
-                  <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
+            <Card key={`stat-skeleton-${index}`} hover>
+              <div className="space-y-3">
+                <div className="h-4 w-28 animate-pulse rounded bg-slate-200" />
+
+                <div className="h-8 w-20 animate-pulse rounded bg-slate-200" />
+
+                <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
+              </div>
+            </Card>
+          ))
+          : stats.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <Card key={item.title} hover>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">
+                      {item.title}
+                    </p>
+
+                    <p className="mt-2 text-3xl font-semibold text-slate-900">
+                      {item.value}
+                    </p>
+
+                    <p className="mt-2 text-sm text-slate-500">
+                      {item.change}
+                    </p>
+                  </div>
+
+                  <div className={`rounded-2xl p-3 ${item.accent}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
                 </div>
               </Card>
-            ))
-          : stats.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <Card key={item.title} hover>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium text-slate-500">
-                        {item.title}
-                      </p>
-
-                      <p className="mt-2 text-3xl font-semibold text-slate-900">
-                        {item.value}
-                      </p>
-
-                      <p className="mt-2 text-sm text-slate-500">
-                        {item.change}
-                      </p>
-                    </div>
-
-                    <div className={`rounded-2xl p-3 ${item.accent}`}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+            );
+          })}
       </div>
 
-      {/* Data Visualizations */}
-      <div>
+      {/* -------------------------------------------- */}
+      {/* Workforce Analytics */}
+      {/* -------------------------------------------- */}
+
+      <section>
         <div className="mb-4">
           <h2 className="text-xl font-semibold text-slate-900">
             Workforce Analytics
@@ -226,113 +269,143 @@ function Dashboard() {
           </p>
         </div>
 
-        {/* Charts are lazy-loaded to reduce initial JavaScript */}
-        <div className="grid gap-6 xl:grid-cols-2">
-          <Suspense fallback={chartFallback}>
-            <DepartmentChart data={departmentStats} />
-          </Suspense>
+        {/* 
+          One Suspense boundary for all charts.
+          This reduces unnecessary loading boundary overhead.
+        */}
+        <Suspense fallback={chartFallback}>
+          <div className="grid gap-6 xl:grid-cols-2">
+            {showCharts ? (
+              <>
+                <Suspense fallback={chartFallback}>
+                  <DepartmentChart data={departmentStats} />
+                </Suspense>
 
-          <Suspense fallback={chartFallback}>
-            <JoiningTrendChart data={joiningTrend} />
-          </Suspense>
-        </div>
+                <Suspense fallback={chartFallback}>
+                  <JoiningTrendChart data={joiningTrend} />
+                </Suspense>
+              </>
+            ) : (
+              <>
+                {chartFallback}
+                {chartFallback}
+              </>
+            )}
+          </div>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-2">
-          <Suspense fallback={chartFallback}>
-            <StatusChart data={statusStats} />
-          </Suspense>
+          <div className="mt-6 grid gap-6 xl:grid-cols-2">
+            {showCharts ? (
+              <Suspense fallback={chartFallback}>
+                <StatusChart data={statusStats} />
+              </Suspense>
+            ) : (
+              chartFallback
+            )}
 
-          {/* Workforce Summary */}
-          <Card>
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-slate-900">
-                Workforce Summary
-              </h3>
+            {/* -------------------------------------- */}
+            {/* Workforce Summary */}
+            {/* -------------------------------------- */}
 
-              <p className="mt-1 text-sm text-slate-500">
-                Current employee status overview.
-              </p>
-            </div>
+            <Card>
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Workforce Summary
+                </h3>
 
-            <div className="space-y-6">
-              {/* Active Employees */}
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-600">
-                    Active Employees
-                  </span>
-
-                  <span className="text-sm font-semibold text-slate-900">
-                    {dashboardData?.activeEmployees}
-                  </span>
-                </div>
-
-                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                    style={{
-                      width: `${activePercentage}%`,
-                    }}
-                  />
-                </div>
-
-                <p className="mt-2 text-xs text-slate-500">
-                  {activePercentage}% of total employees
+                <p className="mt-1 text-sm text-slate-500">
+                  Current employee status overview.
                 </p>
               </div>
 
-              {/* Inactive Employees */}
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-600">
-                    Inactive Employees
-                  </span>
+              <div className="space-y-6">
+                {/* Active Employees */}
 
-                  <span className="text-sm font-semibold text-slate-900">
-                    {dashboardData?.inactiveEmployees}
-                  </span>
-                </div>
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-600">
+                      Active Employees
+                    </span>
 
-                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className="h-full rounded-full bg-amber-500 transition-all duration-500"
-                    style={{
-                      width: `${inactivePercentage}%`,
-                    }}
-                  />
-                </div>
-
-                <p className="mt-2 text-xs text-slate-500">
-                  {inactivePercentage}% of total employees
-                </p>
-              </div>
-
-              {/* Total Departments */}
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">
-                      Total Departments
-                    </p>
-
-                    <p className="mt-1 text-2xl font-semibold text-slate-900">
-                      {dashboardData?.totalDepartments}
-                    </p>
+                    <span className="text-sm font-semibold text-slate-900">
+                      {activeEmployees}
+                    </span>
                   </div>
 
-                  <div className="rounded-xl bg-white p-3 text-slate-600 shadow-sm">
-                    <HiOutlineOfficeBuilding className="h-5 w-5" />
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                      style={{
+                        width: `${activePercentage}%`,
+                      }}
+                    />
+                  </div>
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    {activePercentage}% of total employees
+                  </p>
+                </div>
+
+                {/* Inactive Employees */}
+
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-600">
+                      Inactive Employees
+                    </span>
+
+                    <span className="text-sm font-semibold text-slate-900">
+                      {inactiveEmployees}
+                    </span>
+                  </div>
+
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-amber-500 transition-all duration-500"
+                      style={{
+                        width: `${inactivePercentage}%`,
+                      }}
+                    />
+                  </div>
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    {inactivePercentage}% of total employees
+                  </p>
+                </div>
+
+                {/* Total Departments */}
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-500">
+                        Total Departments
+                      </p>
+
+                      <p className="mt-1 text-2xl font-semibold text-slate-900">
+                        {dashboardData?.totalDepartments || 0}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl bg-white p-3 text-slate-600 shadow-sm">
+                      <HiOutlineOfficeBuilding className="h-5 w-5" />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Card>
-        </div>
-      </div>
+            </Card>
+          </div>
+        </Suspense>
+      </section>
 
-      {/* Main Content */}
+      {/* -------------------------------------------- */}
+      {/* Recent Employees + Right Sidebar */}
+      {/* -------------------------------------------- */}
+
       <div className="grid gap-6 xl:grid-cols-[1.7fr_0.9fr]">
+        {/* ------------------------------------------ */}
         {/* Recent Employees */}
+        {/* ------------------------------------------ */}
+
         <Card padded={false} className="overflow-hidden">
           <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
             <div>
@@ -354,26 +427,19 @@ function Dashboard() {
             <table className="min-w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-500">
                 <tr>
-                  <th className="px-5 py-3 font-medium sm:px-6">
-                    Name
-                  </th>
+                  <th className="px-5 py-3 font-medium sm:px-6">Name</th>
 
-                  <th className="px-5 py-3 font-medium sm:px-6">
-                    Department
-                  </th>
+                  <th className="px-5 py-3 font-medium sm:px-6">Department</th>
 
-                  <th className="px-5 py-3 font-medium sm:px-6">
-                    Role
-                  </th>
+                  <th className="px-5 py-3 font-medium sm:px-6">Role</th>
 
-                  <th className="px-5 py-3 font-medium sm:px-6">
-                    Status
-                  </th>
+                  <th className="px-5 py-3 font-medium sm:px-6">Status</th>
                 </tr>
               </thead>
 
               <tbody>
                 {/* Loading */}
+
                 {loading ? (
                   Array.from({ length: 5 }).map((_, index) => (
                     <tr
@@ -382,10 +448,11 @@ function Dashboard() {
                     >
                       <td className="px-5 py-4 sm:px-6">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 animate-pulse rounded-full bg-slate-200" />
+                          <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-slate-200" />
 
                           <div className="space-y-2">
                             <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
+
                             <div className="h-3 w-40 animate-pulse rounded bg-slate-200" />
                           </div>
                         </div>
@@ -473,9 +540,13 @@ function Dashboard() {
           </div>
         </Card>
 
-        {/* Right Side */}
+        {/* ------------------------------------------ */}
+        {/* Right Sidebar */}
+        {/* ------------------------------------------ */}
+
         <div className="space-y-6">
           {/* Quick Actions */}
+
           <Card>
             <div>
               <p className="text-sm font-medium text-slate-500">
@@ -510,6 +581,7 @@ function Dashboard() {
           </Card>
 
           {/* Data Insights */}
+
           <Card>
             <div>
               <p className="text-sm font-medium text-slate-500">
@@ -522,8 +594,10 @@ function Dashboard() {
             </div>
 
             <div className="mt-5 space-y-4">
+              {/* Active Rate */}
+
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   Active Rate
                 </p>
 
@@ -532,8 +606,10 @@ function Dashboard() {
                 </p>
               </div>
 
+              {/* Departments */}
+
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   Departments
                 </p>
 
@@ -542,17 +618,15 @@ function Dashboard() {
                 </p>
               </div>
 
+              {/* Selected Range */}
+
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   Selected Range
                 </p>
 
                 <p className="mt-1 text-lg font-semibold text-slate-900">
-                  {selectedRange === "7d"
-                    ? "Last 7 Days"
-                    : selectedRange === "30d"
-                      ? "Last 30 Days"
-                      : "This Year"}
+                  {selectedRangeLabel}
                 </p>
               </div>
             </div>
@@ -564,4 +638,3 @@ function Dashboard() {
 }
 
 export default Dashboard;
-

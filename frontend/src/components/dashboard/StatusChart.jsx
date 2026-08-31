@@ -6,7 +6,6 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-
 import Card from "../common/Card";
 
 const STATUS_COLORS = {
@@ -52,7 +51,10 @@ function StatusChart({ data }) {
 
               <Tooltip />
 
-              <Legend verticalAlign="bottom" height={36} />
+              <Legend
+                verticalAlign="bottom"
+                height={36}
+              />
             </PieChart>
           </ResponsiveContainer>
         ) : (
@@ -66,3 +68,4 @@ function StatusChart({ data }) {
 }
 
 export default StatusChart;
+
