@@ -2,15 +2,29 @@
 
 A modern, responsive, full-stack **Employee Management System** built with the **MERN stack**.
 
-The application helps organizations manage employee records through a clean and intuitive interface. It provides complete CRUD functionality, employee search and filtering, sorting, pagination, dashboard statistics, data visualization, form validation, error handling, and automated testing.
+The application provides a complete interface for managing employee records, including CRUD operations, search, filtering, sorting, pagination, dashboard statistics, data visualization, form validation, error handling, and automated testing.
+
+The application is deployed to production with the frontend and backend hosted separately on **Vercel**.
 
 This project was developed as part of my **Full Stack Developer internship at NeuroFive Solutions**.
 
 ---
 
-## Features
+## Live Application
 
-### Employee Management
+### Frontend
+
+https://employee-management-system-8zex.vercel.app/
+
+### Backend
+
+The backend is deployed separately on Vercel and is consumed by the production frontend through environment-based API configuration.
+
+---
+
+# Features
+
+## Employee Management
 
 - Add new employees
 - Edit employee details
@@ -29,46 +43,61 @@ This project was developed as part of my **Full Stack Developer internship at Ne
 - Toast notifications
 - Loading states
 - Error handling
+- Empty states
 - Automatic pagination adjustment after employee deletion
 - Prevention of duplicate form submission
 
 ---
 
-## Dashboard & Data Visualization
+# Dashboard & Data Visualization
 
-The dashboard provides a visual overview of the employee database.
+The dashboard provides a real-time overview of employee data and workforce activity.
 
-- Total employees statistics
-- Active employees statistics
-- Inactive employees statistics
-- Total departments statistics
-- Employees by department bar chart
-- Employee joining trend line chart
-- Active vs inactive employee donut chart
-- Recent employees section
-- Workforce summary
-- Data insights
+### Statistics
+
+- Total Employees
+- Active Employees
+- Inactive Employees
+- New Employees during the selected period
+
+### Visualizations
+
+- Employees by Department bar chart
+- Employee Joining Trend line chart
+- Employee Status donut chart
+- Workforce Summary with active/inactive percentages
+
+### Dashboard Features
+
+- Last 7 Days filter
+- Last 30 Days filter
+- This Year filter
+- Dynamic dashboard data
 - Responsive charts
-- Loading skeletons
-- Error states
-- Empty states
+- Lazy-loaded chart components
+- Chart loading states
+- Dashboard loading skeletons
+- Dashboard error handling
+- Retry functionality
+- Responsive layout for desktop, tablet, and mobile
 
 ---
 
-## Backend Data Aggregation
+# Backend Data Aggregation
 
-Dashboard information is processed on the backend using MongoDB queries and aggregation.
+Dashboard information is processed by the backend using MongoDB queries and aggregation.
 
-The backend can calculate:
+The API provides data for:
 
 - Total employees
 - Active employees
 - Inactive employees
-- Total departments
+- New employees
 - Department-wise employee distribution
 - Employee status distribution
 - Employee joining trends
-- Recent employees
+
+The frontend consumes this data through the employee service layer.
 
 ---
 
@@ -81,9 +110,8 @@ The backend can calculate:
 - Tailwind CSS v4
 - React Router DOM
 - Axios
-- Zustand
 - Recharts
-- React Icons
+- Lucide React
 - React Hot Toast
 
 ## Backend
@@ -103,6 +131,95 @@ The backend can calculate:
 - Supertest
 - Playwright
 
+## Deployment
+
+- Vercel
+- MongoDB Atlas
+- Environment Variables
+
+---
+
+# Application Architecture
+
+```text
+                         ┌─────────────────────────┐
+                         │       Web Browser       │
+                         └────────────┬────────────┘
+                                      │
+                                      ▼
+                         ┌─────────────────────────┐
+                         │      React + Vite       │
+                         │   Pages & Components    │
+                         └────────────┬────────────┘
+                                      │
+                                      ▼
+                         ┌─────────────────────────┐
+                         │     Employee Service    │
+                         │     Axios API Client    │
+                         └────────────┬────────────┘
+                                      │
+                                      │ HTTP Requests
+                                      ▼
+                         ┌─────────────────────────┐
+                         │     Express.js API      │
+                         │    RESTful Endpoints   │
+                         └────────────┬────────────┘
+                                      │
+                                      ▼
+                         ┌─────────────────────────┐
+                         │ Employee Controller     │
+                         │ Validation & Business   │
+                         │ Logic                   │
+                         └────────────┬────────────┘
+                                      │
+                                      ▼
+                         ┌─────────────────────────┐
+                         │   Mongoose Employee     │
+                         │        Model            │
+                         └────────────┬────────────┘
+                                      │
+                                      ▼
+                         ┌─────────────────────────┐
+                         │        MongoDB           │
+                         │    Employee Database     │
+                         └─────────────────────────┘
+```
+
+---
+
+# Production Architecture
+
+The application is deployed using separate frontend and backend services.
+
+```text
+                     Production Environment
+
+┌──────────────────────────────┐
+│          Vercel              │
+│        Frontend              │
+│                              │
+│ React + Vite + Tailwind CSS  │
+└──────────────┬───────────────┘
+               │
+               │ HTTPS API Requests
+               ▼
+┌──────────────────────────────┐
+│          Vercel              │
+│         Backend              │
+│                              │
+│ Node.js + Express + Mongoose │
+└──────────────┬───────────────┘
+               │
+               │ MongoDB Connection
+               ▼
+┌──────────────────────────────┐
+│        MongoDB Atlas         │
+│      Employee Database       │
+└──────────────────────────────┘
+```
+
+Environment variables are used so production API URLs and database credentials are not hardcoded into the application.
+
 ---
 
 # Project Structure
@@ -111,6 +228,7 @@ The backend can calculate:
 Employee-Management-System/
 │
 ├── backend/
+│   ├── api/
 │   ├── config/
 │   ├── controllers/
 │   │   └── employeeController.js
@@ -144,15 +262,9 @@ Employee-Management-System/
 │   │   ├── services/
 │   │   │   ├── axios.js
 │   │   │   └── employeeService.js
-│   │   ├── store/
-│   │   │   └── dashboardStore.js
 │   │   ├── test/
-│   │   │   ├── setup.js
-│   │   │   ├── AddEmployee.test.jsx
-│   │   │   └── example.test.jsx
 │   │   ├── App.jsx
 │   │   └── main.jsx
-│   │
 │   ├── tests/
 │   │   └── employee-flow.spec.js
 │   ├── vitest.config.js
@@ -161,59 +273,6 @@ Employee-Management-System/
 │   └── package.json
 │
 └── README.md
-```
-
----
-
-# Application Architecture
-
-```text
-                         ┌──────────────────────┐
-                         │        User          │
-                         │     Web Browser      │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │      React.js        │
-                         │  Pages & Components  │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │    Zustand Store     │
-                         │    Global State      │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │       Axios          │
-                         │    HTTP Requests     │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │    Express.js API    │
-                         │   RESTful Endpoints  │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │ Employee Controller  │
-                         │ Validation & Logic   │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │ Mongoose Employee    │
-                         │        Model         │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │       MongoDB        │
-                         │   Employee Database  │
-                         └──────────────────────┘
 ```
 
 ---
@@ -231,7 +290,7 @@ cd Employee-Management-System
 
 # Backend Setup
 
-Navigate to the backend folder:
+Navigate to the backend:
 
 ```bash
 cd backend
@@ -266,7 +325,7 @@ http://localhost:5000
 
 # Frontend Setup
 
-Open a new terminal and navigate to the frontend folder:
+Open a new terminal and navigate to the frontend:
 
 ```bash
 cd frontend
@@ -298,22 +357,41 @@ http://localhost:5173
 
 ---
 
+# Environment Variables
+
+## Backend
+
+```env
+PORT=5000
+MONGODB_URI=your_mongodb_connection_string
+```
+
+## Frontend
+
+```env
+VITE_API_URL=your_backend_api_url
+```
+
+For production, the environment variables are configured through Vercel rather than hardcoded in the source code.
+
+---
+
 # API Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/api/employees` | Get all employees |
+| GET | `/api/employees` | Get employees |
 | GET | `/api/employees/:id` | Get employee by ID |
-| POST | `/api/employees` | Create a new employee |
+| POST | `/api/employees` | Create employee |
 | PUT | `/api/employees/:id` | Update employee |
 | DELETE | `/api/employees/:id` | Delete employee |
-| GET | `/api/employees/dashboard` | Get dashboard statistics |
+| GET | `/api/employees/dashboard` | Get dashboard data |
 
 ---
 
 # Validation & Error Handling
 
-The application includes validation and error handling at both frontend and backend levels.
+Validation is implemented at both frontend and backend levels.
 
 ### Employee Validation
 
@@ -329,26 +407,27 @@ The application includes validation and error handling at both frontend and back
 
 ### UI States
 
+The application handles:
+
 - Loading states
 - Loading skeletons
-- Error messages
+- API errors
 - Empty states
 - Retry actions
-- Success toast notifications
-- Error toast notifications
+- Success notifications
+- Error notifications
 - Duplicate submission prevention
 
 ---
 
 # Testing
 
-The project uses automated tests across the frontend, backend, and end-to-end application flow.
+The project includes testing across multiple layers:
 
 ```text
                     Automated Testing
                            │
           ┌────────────────┼────────────────┐
-          │                │                │
           ▼                ▼                ▼
       Frontend          Backend             E2E
        Tests             Tests             Tests
@@ -358,30 +437,23 @@ The project uses automated tests across the frontend, backend, and end-to-end ap
      RTL               Supertest
           │                │                │
           ▼                ▼                ▼
-     Components        REST APIs       Real User Flow
+     Components        REST APIs       User Flow
      Interactions      Validation      Browser Testing
 ```
 
 ---
 
-## Frontend Tests
+# Frontend Tests
 
 Frontend tests use **Vitest** and **React Testing Library**.
 
-Current tests include:
+Tests cover:
 
 - Employee form rendering
-- Successful employee creation
+- Employee creation
 - Employee creation failure handling
 - Duplicate submission prevention
-- Basic JavaScript functionality
-
-Frontend test files:
-
-```text
-frontend/src/test/AddEmployee.test.jsx
-frontend/src/test/example.test.jsx
-```
+- Basic component functionality
 
 Run frontend tests:
 
@@ -393,29 +465,23 @@ npx vitest run
 Current result:
 
 ```text
-Test Files  2 passed
-Tests       6 passed
+Test Files: 2 passed
+Tests:      6 passed
 ```
 
 ---
 
-## Backend Tests
+# Backend Tests
 
 Backend API tests use **Jest** and **Supertest**.
 
-The current backend test suite covers:
+Tests cover:
 
 - API health check
 - Successful employee creation
 - Missing full name validation
 - Invalid email validation
 - Missing phone validation
-
-Backend test file:
-
-```text
-backend/test/employee.test.js
-```
 
 Run backend tests:
 
@@ -435,9 +501,7 @@ Tests:       5 passed
 
 # End-to-End Testing
 
-The project uses **Playwright** for browser-based end-to-end testing.
-
-The current E2E test simulates a real employee creation flow:
+The project uses **Playwright** to test a real browser-based employee creation flow.
 
 ```text
 Open Application
@@ -459,18 +523,6 @@ Employee Created
 Navigate to Employees
 ```
 
-Playwright configuration:
-
-```text
-frontend/playwright.config.js
-```
-
-E2E test:
-
-```text
-frontend/tests/employee-flow.spec.js
-```
-
 Run the E2E test:
 
 ```bash
@@ -484,7 +536,7 @@ Current result:
 1 passed
 ```
 
-To view the Playwright HTML report:
+To view the Playwright report:
 
 ```bash
 npx playwright show-report
@@ -492,78 +544,326 @@ npx playwright show-report
 
 ---
 
-# Running All Tests
+# Deployment
 
-### 1. Frontend Tests
+The application was deployed as part of the production deployment and performance phase.
 
-```bash
-cd frontend
-npx vitest run
+## Frontend Deployment
+
+The React/Vite frontend is deployed on Vercel.
+
+Production URL:
+
+```text
+https://employee-management-system-8zex.vercel.app/
 ```
 
-### 2. Backend Tests
+## Backend Deployment
 
-```bash
-cd backend
-npm test
+The Express.js backend is deployed separately on Vercel.
+
+The frontend communicates with the backend through:
+
+```env
+VITE_API_URL
 ```
 
-### 3. End-to-End Test
+This avoids hardcoded localhost URLs in production.
 
-```bash
-cd frontend
-npx playwright test tests/employee-flow.spec.js
+## Database
+
+MongoDB Atlas is used as the production database.
+
+The backend connects to MongoDB through:
+
+```env
+MONGODB_URI
 ```
-
-> The Playwright E2E test automatically starts the Vite development server through `playwright.config.js` when required.
 
 ---
 
-# Dashboard Architecture
+# Production Testing
 
-The dashboard follows a full-stack data flow:
+After deployment, the application was tested using the production environment rather than relying only on localhost.
+
+The following functionality was verified:
+
+- Dashboard loading
+- Employee listing
+- Add employee
+- Edit employee
+- Delete employee
+- Search
+- Filtering
+- Sorting
+- Pagination
+- Dashboard statistics
+- Department chart
+- Joining trend chart
+- Employee status chart
+- Dashboard filters
+- API communication
+- Error handling
+- Toast notifications
+- Responsive layout
+- Mobile layout
+- Desktop layout
+
+---
+
+# Lighthouse / PageSpeed Performance
+
+A Lighthouse/PageSpeed audit was performed against the deployed production application.
+
+### Final Scores
+
+| Category | Score |
+|---|---:|
+| Performance | **96** |
+| Accessibility | **96** |
+| Best Practices | **96** |
+| SEO | **91** |
+
+These results were obtained from the deployed Vercel application using PageSpeed Insights.
+
+---
+
+# Performance Improvements
+
+Several improvements were made during the production performance pass.
+
+### 1. Lazy Loading Dashboard Charts
+
+The dashboard charts were changed to lazy-loaded components using React `lazy()`.
+
+```javascript
+const DepartmentChart = lazy(
+  () => import("../components/dashboard/DepartmentChart")
+);
+
+const JoiningTrendChart = lazy(
+  () => import("../components/dashboard/JoiningTrendChart")
+);
+
+const StatusChart = lazy(
+  () => import("../components/dashboard/StatusChart")
+);
+```
+
+This prevents the chart components from being loaded as part of the initial dashboard bundle.
+
+---
+
+### 2. Chart Loading States
+
+A dedicated loading state was added for asynchronously loaded charts.
 
 ```text
-┌──────────────────────────┐
-│      React Dashboard     │
-└────────────┬─────────────┘
-             │
-             ▼
-┌──────────────────────────┐
-│      Zustand Store       │
-│    Dashboard State       │
-└────────────┬─────────────┘
-             │
-             ▼
-┌──────────────────────────┐
-│       Axios API          │
-└────────────┬─────────────┘
-             │
-             ▼
-┌──────────────────────────┐
-│     Express REST API     │
-└────────────┬─────────────┘
-             │
-             ▼
-┌──────────────────────────┐
-│ MongoDB + Mongoose       │
-│ Aggregation / Queries    │
-└────────────┬─────────────┘
-             │
-             ▼
-┌──────────────────────────┐
-│ Dashboard Statistics     │
-│ Charts + Recent Data     │
-└──────────────────────────┘
+Loading chart...
+```
+
+This provides visual feedback while chart components are being loaded.
+
+---
+
+### 3. Dashboard Loading Skeleton
+
+Instead of displaying an empty dashboard while API data is loading, skeleton placeholders were added for:
+
+- Dashboard heading
+- Statistics cards
+- Analytics cards
+
+This improves perceived loading performance and reduces layout shifts.
+
+---
+
+### 4. Dashboard Rendering Optimization
+
+The dashboard was refactored to use:
+
+- `useMemo`
+- `useCallback`
+- `memo`
+- Lazy-loaded chart components
+
+This reduces unnecessary calculations and component re-renders.
+
+---
+
+### 5. Production API Configuration
+
+The frontend previously needed to avoid relying on hardcoded localhost URLs.
+
+The API client now uses:
+
+```javascript
+import.meta.env.VITE_API_URL
+```
+
+This allows the same frontend codebase to work with both development and production APIs.
+
+---
+
+### 6. Responsive Dashboard Layout
+
+The dashboard was optimized for different screen sizes using responsive Tailwind CSS layouts.
+
+The production application was tested on:
+
+- Desktop
+- Tablet-sized layouts
+- Mobile
+
+---
+
+# Problems Encountered & Solutions
+
+During development and deployment, several issues were identified and resolved.
+
+## Problem 1: Dashboard Charts Were Not Displaying Correctly
+
+### Issue
+
+The dashboard chart components required the correct data structure from the backend. In addition, the dashboard had unnecessary loading complexity around chart rendering.
+
+### Solution
+
+The dashboard was refactored to:
+
+- Fetch dashboard data directly through the employee service
+- Normalize the dashboard response
+- Pass dedicated datasets to each chart
+- Lazy-load chart components
+- Add proper chart loading and empty states
+
+The charts now receive:
+
+```text
+departmentData
+joiningTrendData
+statusData
+```
+
+and render correctly with production data.
+
+---
+
+## Problem 2: Dashboard Loading Experience
+
+### Issue
+
+The dashboard could appear empty or incomplete while API data and chart components were loading.
+
+### Solution
+
+Loading skeletons and dedicated chart loaders were introduced.
+
+This provides a stable layout while data is being fetched and charts are being loaded.
+
+---
+
+## Problem 3: Hardcoded Local API URL
+
+### Issue
+
+Using localhost URLs would work during local development but fail after deployment.
+
+### Solution
+
+The frontend API configuration was changed to use:
+
+```env
+VITE_API_URL
+```
+
+The production Vercel environment now points to the deployed backend API.
+
+---
+
+## Problem 4: Duplicate Toast Notifications
+
+### Issue
+
+Some operations could result in duplicate toast notifications because of duplicated toast provider/import handling.
+
+### Solution
+
+The toast configuration was cleaned up so notifications are displayed consistently without unnecessary duplication.
+
+---
+
+## Problem 5: Add Employee Test Failure
+
+### Issue
+
+The frontend test initially expected the `Discard` action to be a button.
+
+However, the actual application implementation used a link.
+
+### Solution
+
+The test was updated to correctly reflect the real UI:
+
+```text
+Discard → Link
+```
+
+The test then passed successfully.
+
+This demonstrates that the tests were aligned with the actual user interface rather than forcing the UI to match an incorrect test assumption.
+
+---
+
+## Problem 6: Production vs Local Environment
+
+### Issue
+
+An application can work correctly on localhost but fail after deployment because of differences in API URLs, environment variables, hosting, or database configuration.
+
+### Solution
+
+The complete application was tested against the production deployment.
+
+The frontend, backend, and MongoDB Atlas connection were verified together.
+
+---
+
+## Problem 7: Lighthouse Performance Optimization
+
+### Issue
+
+The initial production audit identified areas where loading behavior and frontend rendering could be improved.
+
+### Solution
+
+The application was optimized using:
+
+- Lazy-loaded dashboard charts
+- Loading skeletons
+- Chart loading states
+- Memoized components
+- `useMemo`
+- `useCallback`
+- Environment-based API configuration
+- Responsive layout improvements
+
+The final PageSpeed audit achieved:
+
+```text
+Performance:      96
+Accessibility:    96
+Best Practices:   96
+SEO:              91
 ```
 
 ---
 
 # Dashboard Visualizations
 
-## Department Distribution
+## Employees by Department
 
-A bar chart displays the number of employees across:
+A bar chart displays employee distribution across departments:
 
 - IT
 - HR
@@ -571,26 +871,30 @@ A bar chart displays the number of employees across:
 - Marketing
 - Sales
 
+---
+
 ## Joining Trend
 
 A line chart visualizes employee joining activity over time using employee `joiningDate` data.
 
+---
+
 ## Employee Status
 
-A donut chart provides a comparison between:
+A donut chart compares:
 
 - Active employees
 - Inactive employees
 
-## Recent Employees
+---
 
-The dashboard displays recent employee records with:
+## Workforce Summary
 
-- Name
-- Email
-- Department
-- Position
-- Status
+The workforce summary displays:
+
+- Active employee percentage
+- Inactive employee percentage
+- Link to view all employees
 
 ---
 
@@ -608,9 +912,11 @@ The dashboard displays recent employee records with:
 - [x] Pagination
 - [x] Combined filters
 - [x] Form validation
+- [x] Backend validation
 - [x] Error handling
 - [x] Loading states
 - [x] Toast notifications
+- [x] Duplicate submission prevention
 
 ## Dashboard
 
@@ -618,13 +924,28 @@ The dashboard displays recent employee records with:
 - [x] Department bar chart
 - [x] Joining trend line chart
 - [x] Employee status donut chart
+- [x] Dashboard filters
 - [x] Backend data integration
 - [x] MongoDB aggregation
-- [x] Recent employees
 - [x] Workforce summary
-- [x] Data insights
 - [x] Responsive dashboard
 - [x] Real employee data testing
+- [x] Chart loading states
+- [x] Dashboard error handling
+
+## Production
+
+- [x] Frontend deployed
+- [x] Backend deployed
+- [x] Production environment variables
+- [x] MongoDB Atlas connection
+- [x] Production CRUD testing
+- [x] Production API testing
+- [x] Desktop testing
+- [x] Mobile testing
+- [x] PageSpeed audit
+- [x] Performance optimization
+- [x] SEO essentials
 
 ## Automated Testing
 
@@ -633,8 +954,6 @@ The dashboard displays recent employee records with:
 - [x] Backend Jest tests
 - [x] Supertest API tests
 - [x] Playwright E2E test
-- [x] Test documentation
-- [ ] Full test-suite demo video
 
 ---
 
@@ -647,17 +966,21 @@ This project provided practical experience in:
 - MongoDB aggregation pipelines
 - React component architecture
 - CRUD operations
-- Zustand state management
 - Axios API integration
 - Recharts data visualization
 - Responsive dashboard development
 - Form validation
 - Error handling
 - Loading state management
+- Environment-based configuration
+- Production deployment
+- Vercel deployment
+- MongoDB Atlas
 - Automated testing
 - End-to-end testing
+- Lighthouse performance analysis
+- Frontend performance optimization
 - Debugging full-stack data flow
-- Working with real-world test data
 
 ---
 
@@ -685,29 +1008,33 @@ Potential future improvements include:
 
 This project was developed as part of my **Full Stack Developer internship at NeuroFive Solutions**.
 
-The project focused on building a complete employee management platform, transforming backend employee data into a clean and responsive management dashboard, and validating the application through automated frontend, backend, and end-to-end tests.
+The project progressed from backend API development and CRUD functionality to a complete production-ready employee management application.
 
-### Development Flow
+The final phase focused on:
 
 ```text
-Backend Employee Data
-        ↓
-MongoDB Queries & Aggregation
-        ↓
-Express REST API
-        ↓
-Axios API Integration
-        ↓
-Zustand State Management
-        ↓
-React Dashboard
-        ↓
-Charts & Statistics
-        ↓
-Responsive User Interface
+Application Development
         ↓
 Automated Testing
+        ↓
+Production Deployment
+        ↓
+Environment Configuration
+        ↓
+Production Testing
+        ↓
+Lighthouse/PageSpeed Audit
+        ↓
+Performance Optimization
+        ↓
+SEO Essentials
+        ↓
+Responsive Testing
+        ↓
+Documentation
 ```
+
+The application was successfully deployed and tested in a production environment.
 
 ---
 
@@ -717,10 +1044,12 @@ Automated Testing
 
 Full Stack Web Developer
 
-GitHub:  
+GitHub:
+
 https://github.com/sabeerdeveloper555
 
-LinkedIn:  
+LinkedIn:
+
 https://www.linkedin.com/in/sabeer-alam/
 
 ---
