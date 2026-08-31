@@ -1,5 +1,6 @@
-import { useEffect, useMemo } from "react";
+import { lazy, Suspense, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+
 import {
   HiOutlineBriefcase,
   HiOutlineUserAdd,
@@ -15,9 +16,18 @@ import Badge from "../components/common/Badge";
 import Header from "../components/layout/Header";
 
 import DashboardFilter from "../components/dashboard/DashboardFilter";
-import DepartmentChart from "../components/dashboard/DepartmentChart";
-import JoiningTrendChart from "../components/dashboard/JoiningTrendChart";
-import StatusChart from "../components/dashboard/StatusChart";
+
+const DepartmentChart = lazy(
+  () => import("../components/dashboard/DepartmentChart")
+);
+
+const JoiningTrendChart = lazy(
+  () => import("../components/dashboard/JoiningTrendChart")
+);
+
+const StatusChart = lazy(
+  () => import("../components/dashboard/StatusChart")
+);
 
 import useDashboardStore from "../store/dashboardStore";
 
@@ -28,8 +38,13 @@ const quickActions = [
 ];
 
 function Dashboard() {
-  const { dashboardData, loading, error, selectedRange, fetchDashboardData } =
-    useDashboardStore();
+  const {
+    dashboardData,
+    loading,
+    error,
+    selectedRange,
+    fetchDashboardData,
+  } = useDashboardStore();
 
   useEffect(() => {
     fetchDashboardData("7d");
@@ -68,7 +83,9 @@ function Dashboard() {
         title: "Inactive Employees",
         value: inactiveEmployees,
         change:
-          inactiveEmployees > 0 ? "Need follow-up" : "All employees active",
+          inactiveEmployees > 0
+            ? "Need follow-up"
+            : "All employees active",
         icon: HiOutlineUserAdd,
         accent: "bg-amber-50 text-amber-600",
       },
@@ -83,24 +100,29 @@ function Dashboard() {
   }, [dashboardData]);
 
   const recentEmployees = dashboardData?.recentEmployees || [];
-
   const departmentStats = dashboardData?.departmentStats || [];
-
   const statusStats = dashboardData?.statusStats || [];
-
   const joiningTrend = dashboardData?.joiningTrend || [];
 
   const activePercentage = dashboardData?.totalEmployees
     ? Math.round(
-        (dashboardData.activeEmployees / dashboardData.totalEmployees) * 100,
+        (dashboardData.activeEmployees / dashboardData.totalEmployees) * 100
       )
     : 0;
 
   const inactivePercentage = dashboardData?.totalEmployees
     ? Math.round(
-        (dashboardData.inactiveEmployees / dashboardData.totalEmployees) * 100,
+        (dashboardData.inactiveEmployees / dashboardData.totalEmployees) * 100
       )
     : 0;
+
+  const chartFallback = (
+    <div className="flex min-h-[300px] items-center justify-center rounded-xl border border-slate-200 bg-white">
+      <div className="text-sm text-slate-500">
+        Loading chart...
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -115,7 +137,11 @@ function Dashboard() {
               onChange={fetchDashboardData}
             />
 
-            <Button to="/employees/add" icon={HiOutlinePlus} variant="primary">
+            <Button
+              to="/employees/add"
+              icon={HiOutlinePlus}
+              variant="primary"
+            >
               Add Employee
             </Button>
           </div>
@@ -131,7 +157,9 @@ function Dashboard() {
                 Dashboard Error
               </p>
 
-              <p className="mt-1 text-sm text-slate-500">{error}</p>
+              <p className="mt-1 text-sm text-slate-500">
+                {error}
+              </p>
             </div>
 
             <button
@@ -152,9 +180,7 @@ function Dashboard() {
               <Card key={`stat-skeleton-${index}`} hover>
                 <div className="space-y-3">
                   <div className="h-4 w-28 animate-pulse rounded bg-slate-200" />
-
                   <div className="h-8 w-20 animate-pulse rounded bg-slate-200" />
-
                   <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
                 </div>
               </Card>
@@ -200,14 +226,21 @@ function Dashboard() {
           </p>
         </div>
 
+        {/* Charts are lazy-loaded to reduce initial JavaScript */}
         <div className="grid gap-6 xl:grid-cols-2">
-          <DepartmentChart data={departmentStats} />
+          <Suspense fallback={chartFallback}>
+            <DepartmentChart data={departmentStats} />
+          </Suspense>
 
-          <JoiningTrendChart data={joiningTrend} />
+          <Suspense fallback={chartFallback}>
+            <JoiningTrendChart data={joiningTrend} />
+          </Suspense>
         </div>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-2">
-          <StatusChart data={statusStats} />
+          <Suspense fallback={chartFallback}>
+            <StatusChart data={statusStats} />
+          </Suspense>
 
           {/* Workforce Summary */}
           <Card>
@@ -321,22 +354,28 @@ function Dashboard() {
             <table className="min-w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-500">
                 <tr>
-                  <th className="px-5 py-3 font-medium sm:px-6">Name</th>
+                  <th className="px-5 py-3 font-medium sm:px-6">
+                    Name
+                  </th>
 
-                  <th className="px-5 py-3 font-medium sm:px-6">Department</th>
+                  <th className="px-5 py-3 font-medium sm:px-6">
+                    Department
+                  </th>
 
-                  <th className="px-5 py-3 font-medium sm:px-6">Role</th>
+                  <th className="px-5 py-3 font-medium sm:px-6">
+                    Role
+                  </th>
 
-                  <th className="px-5 py-3 font-medium sm:px-6">Status</th>
+                  <th className="px-5 py-3 font-medium sm:px-6">
+                    Status
+                  </th>
                 </tr>
               </thead>
 
               <tbody>
                 {/* Loading */}
                 {loading ? (
-                  Array.from({
-                    length: 5,
-                  }).map((_, index) => (
+                  Array.from({ length: 5 }).map((_, index) => (
                     <tr
                       key={`employee-skeleton-${index}`}
                       className="border-t border-slate-200/80"
@@ -347,7 +386,6 @@ function Dashboard() {
 
                           <div className="space-y-2">
                             <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
-
                             <div className="h-3 w-40 animate-pulse rounded bg-slate-200" />
                           </div>
                         </div>
@@ -526,3 +564,4 @@ function Dashboard() {
 }
 
 export default Dashboard;
+
