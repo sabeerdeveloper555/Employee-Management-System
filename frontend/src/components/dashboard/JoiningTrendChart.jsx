@@ -65,10 +65,7 @@ function JoiningTrendChart({ data }) {
                 bottom: 5,
               }}
             >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-              />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
 
               <XAxis
                 dataKey="label"
@@ -85,12 +82,7 @@ function JoiningTrendChart({ data }) {
                 }}
               />
 
-              <Tooltip
-                formatter={(value) => [
-                  value,
-                  "New Employees",
-                ]}
-              />
+              <Tooltip formatter={(value) => [value, "New Employees"]} />
 
               <Line
                 type="monotone"
@@ -104,6 +96,7 @@ function JoiningTrendChart({ data }) {
                 activeDot={{
                   r: 6,
                 }}
+                isAnimationActive={false}
               />
             </LineChart>
           </ResponsiveContainer>

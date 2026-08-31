@@ -48,6 +48,7 @@ function DepartmentChart({ data }) {
                 name="Employees"
                 radius={[6, 6, 0, 0]}
                 fill="#4f46e5"
+                isAnimationActive={false}
               />
             </BarChart>
           </ResponsiveContainer>

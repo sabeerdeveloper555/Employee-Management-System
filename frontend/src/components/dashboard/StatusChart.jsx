@@ -40,6 +40,7 @@ function StatusChart({ data }) {
                 innerRadius={70}
                 outerRadius={105}
                 paddingAngle={4}
+                isAnimationActive={false}
               >
                 {data.map((entry) => (
                   <Cell
